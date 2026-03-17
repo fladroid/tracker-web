@@ -20,8 +20,7 @@ async function getDb() {
 
   _db = await _sql.open_v2(
     DB_FILE,
-    SQLite.SQLITE_OPEN_CREATE | SQLite.SQLITE_OPEN_READWRITE,
-    'idb-batch-atomic'
+    SQLite.SQLITE_OPEN_CREATE | SQLite.SQLITE_OPEN_READWRITE
   );
 
   await exec(`
