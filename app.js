@@ -133,7 +133,7 @@ async function init() {
   loadSettings();
 
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(console.warn);
+    navigator.serviceWorker.register('./sw.js').catch(console.warn);
   }
 
   await loadHomeData();

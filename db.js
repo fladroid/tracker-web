@@ -1,4 +1,4 @@
-// db.js — wa-sqlite + IDBBatchAtomicVFS (radi na GitHub Pages, bez COOP/COEP)
+// db.js — wa-sqlite + IDBBatchAtomicVFS (GitHub Pages kompatibilno)
 // API identičan tracker-pwa verziji — app.js se ne mijenja
 
 import SQLiteESMFactory from 'https://cdn.jsdelivr.net/npm/wa-sqlite@1.0.0/dist/wa-sqlite-async.mjs';
@@ -6,17 +6,23 @@ import * as SQLite from 'https://cdn.jsdelivr.net/npm/wa-sqlite@1.0.0/src/sqlite
 import { IDBBatchAtomicVFS } from 'https://cdn.jsdelivr.net/npm/wa-sqlite@1.0.0/src/examples/IDBBatchAtomicVFS.js';
 
 const DB_FILE = 'tracker_v2.db';
-let _db   = null;
-let _sql  = null;
+let _db  = null;
+let _sql = null;
 
 async function getDb() {
   if (_db) return { db: _db, sql: _sql };
 
-  const module  = await SQLiteESMFactory();
-  _sql          = SQLite.Factory(module);
-  const vfs     = await IDBBatchAtomicVFS.create('tracker-vfs', module);
+  const module = await SQLiteESMFactory();
+  _sql = SQLite.Factory(module);
+
+  const vfs = new IDBBatchAtomicVFS('tracker-idb');
   _sql.vfs_register(vfs, true);
-  _db           = await _sql.open_v2(DB_FILE, SQLite.SQLITE_OPEN_CREATE | SQLite.SQLITE_OPEN_READWRITE, 'idb-batch-atomic');
+
+  _db = await _sql.open_v2(
+    DB_FILE,
+    SQLite.SQLITE_OPEN_CREATE | SQLite.SQLITE_OPEN_READWRITE,
+    'idb-batch-atomic'
+  );
 
   await exec(`
     CREATE TABLE IF NOT EXISTS daily_values (
@@ -118,7 +124,8 @@ export async function addLog({ type, buttonId = null, delta = null, textValue = 
     [ts, type, buttonId, delta, textValue]
   );
   const rows = await exec('SELECT last_insert_rowid() as id');
-  return { id: rows[0].id, timestamp: ts, type, button_id: buttonId, delta, text_value: textValue, deleted: 0 };
+  return { id: rows[0].id, timestamp: ts, type, button_id: buttonId,
+           delta, text_value: textValue, deleted: 0 };
 }
 
 export async function getLogForRange(from, to, includeDeleted = false) {
@@ -200,8 +207,8 @@ export async function resetDayToZero({ date, counterIds, textIds, currentValues 
 }
 
 export async function getDbStats() {
-  const total   = (await exec('SELECT COUNT(*) as n FROM log'))[0].n;
-  const active  = (await exec('SELECT COUNT(*) as n FROM log WHERE deleted=0'))[0].n;
-  const daily   = (await exec('SELECT COUNT(*) as n FROM daily_values'))[0].n;
+  const total  = (await exec('SELECT COUNT(*) as n FROM log'))[0].n;
+  const active = (await exec('SELECT COUNT(*) as n FROM log WHERE deleted=0'))[0].n;
+  const daily  = (await exec('SELECT COUNT(*) as n FROM daily_values'))[0].n;
   return { total_log: total, active_log: active, deleted_log: total - active, total_daily: daily };
 }
